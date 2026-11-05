@@ -1,0 +1,140 @@
+@startuml
+' MediGuard IoT - Diagrama de Clases Completo
+' Se privilegian responsabilidades del dominio y de los componentes software.
+skinparam classAttributeIconSize 0
+hide empty members
+
+package "Dominio clínico" {
+  abstract class Usuario {
+    +id: String
+    +nombre: String
+    +autenticar(): boolean
+  }
+  class Medico extends Usuario {
+    +matricula: String
+    +consultarHistorial(): List<VitalReading>
+    +confirmarAlarma(): void
+  }
+  class Enfermera extends Usuario {
+    +area: String
+  }
+  class Paciente {
+    +id: String
+    +nombre: String
+    +cama: String
+    +estado: EstadoPaciente
+  }
+  enum EstadoPaciente {
+    NORMAL
+    ALERTA
+    CRITICO
+    EMERGENCIA
+    RECUPERACION
+  }
+  class VitalReading {
+    +timestamp: DateTime
+    +frecuenciaCardiaca: int
+    +spo2: decimal
+    +presionArterial: String
+    +temperatura: decimal
+  }
+  class Alarma {
+    +id: String
+    +prioridad: String
+    +tipo: String
+    +timestamp: DateTime
+    +confirmada: boolean
+  }
+  class Incidente {
+    +id: String
+    +tipo: String
+    +inicio: DateTime
+    +fin: DateTime
+    +descripcion: String
+  }
+}
+
+package "IoT y control" {
+  class SensorBiomedico {
+    +id: String
+    +tipo: String
+    +capturar(): VitalReading
+    +transmitir(): void
+  }
+  class Gateway {
+    +id: String
+    +recibirLectura(): void
+    +enviarOrdenParo(): void
+  }
+  class BombaInfusion {
+    +id: String
+    +estado: String
+    +detener(): void
+  }
+}
+
+package "Plataforma software" {
+  class TelemetriaService {
+    +ingresarLectura(): void
+    +publicarLectura(): void
+  }
+  class AnaphylaxisDetectionService {
+    +evaluar(): boolean
+    +generarIncidente(): Incidente
+  }
+  class AlertService {
+    +crearAlarma(): Alarma
+    +enviarPush(): void
+  }
+  class AuthService {
+    +validarRFID(): boolean
+  }
+  class HistoryService {
+    +guardar(): void
+    +consultar(): List<VitalReading>
+  }
+  class InfusionControlService {
+    +solicitarParo(): void
+  }
+  class IncidentService {
+    +registrar(): void
+    +generarReporte(): void
+  }
+  class MobileApp {
+    +recibirAlerta(): void
+    +confirmarAlarma(): void
+  }
+  class BedsideDisplay {
+    +mostrarECG(): void
+    +mostrarAlarma(): void
+  }
+}
+
+Paciente "1" o-- "0..*" VitalReading
+Paciente "1" o-- "0..*" Alarma
+Paciente "1" o-- "0..*" Incidente
+SensorBiomedico "1..*" --> "1" Gateway : telemetría
+Gateway --> TelemetriaService
+TelemetriaService --> HistoryService
+HistoryService --> VitalReading
+TelemetriaService --> AnaphylaxisDetectionService
+AnaphylaxisDetectionService --> AlertService
+AlertService --> MobileApp
+AlertService --> BedsideDisplay
+MobileApp --> Alarma : confirma
+Medico --> AuthService
+AuthService --> Medico
+Medico --> HistoryService
+Enfermera --> BedsideDisplay
+AnaphylaxisDetectionService --> InfusionControlService
+InfusionControlService --> Gateway : orden de paro
+Gateway --> BombaInfusion : paro
+IncidentService --> Incidente
+Alarma --> Incidente : puede originar
+InfusionControlService --> IncidentService
+
+note right of AnaphylaxisDetectionService
+RF-08: detección predictiva
+RF-09: iniciar respuesta de emergencia
+end note
+@enduml

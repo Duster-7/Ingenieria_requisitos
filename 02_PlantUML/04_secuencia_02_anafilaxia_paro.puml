@@ -1,0 +1,29 @@
+@startuml
+' MediGuard IoT - Secuencia 02: Detección de anafilaxia y paro de infusión
+actor "Sensor biomédico" as Sensor
+participant "Gateway" as GW
+participant "TelemetriaService" as TS
+participant "AnaphylaxisDetectionService" as ADS
+participant "InfusionControlService" as ICS
+participant "Bomba de infusión" as Pump
+participant "AlertService" as AS
+participant "MobileApp" as App
+participant "IncidentService" as IS
+actor "Médico de guardia" as Doctor
+
+Sensor -> GW : transmitir signos vitales
+GW -> TS : enviar telemetría
+TS -> ADS : evaluar(VitalReading)
+ADS -> ADS : detectar patrón de anafilaxia
+alt Evento de anafilaxia confirmado
+  ADS -> ICS : solicitarParo(paciente)
+  ICS -> GW : enviarOrdenParo()
+  GW -> Pump : comando STOP
+  Pump --> GW : estado=DETENIDA
+  GW --> ICS : confirmación de paro
+  ADS -> AS : generar alarma crítica
+  AS -> App : push de emergencia
+  App -> Doctor : notificación y solicitud de confirmación
+  ADS -> IS : registrar incidente y acciones
+end
+@enduml

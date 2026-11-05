@@ -1,0 +1,25 @@
+@startuml
+' MediGuard IoT - Secuencia 01: Telemetría y alarma crítica
+actor "Sensor biomédico" as Sensor
+participant "Gateway" as GW
+participant "TelemetriaService" as TS
+participant "AlertService" as AS
+participant "BedsideDisplay" as UI
+participant "MobileApp" as App
+participant "HistoryService" as HS
+actor "Médico de guardia" as Doctor
+
+Sensor -> GW : enviar lectura de signos vitales
+GW -> TS : publicar(VitalReading)
+TS -> HS : guardar(VitalReading)
+TS -> UI : actualizar señal / ECG
+TS -> TS : evaluar umbrales críticos
+alt FC > 140 o FC < 45
+  TS -> AS : crearAlarma(prioridad=ALTA)
+  AS -> UI : mostrar alarma sonora/visual
+  AS -> App : push de emergencia
+  App -> Doctor : notificación crítica
+  Doctor -> App : confirmar alarma
+  App -> AS : registrar confirmación
+end
+@enduml

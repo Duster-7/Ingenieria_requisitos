@@ -1,0 +1,25 @@
+@startuml
+' MediGuard IoT - Diagrama de Estados de monitorización del paciente
+[*] --> NORMAL : iniciar monitorización
+
+state NORMAL {
+  [*] --> Vigilando
+  Vigilando --> [*]
+}
+
+NORMAL --> ALERTA : valor fuera de rango preventivo
+ALERTA --> NORMAL : valores normalizados
+ALERTA --> CRITICO : condición clínica crítica
+CRITICO --> ALARMA_ACTIVA : generar alarma
+ALARMA_ACTIVA --> ALARMA_CONFIRMADA : médico/enfermera confirma
+ALARMA_ACTIVA --> EMERGENCIA : anafilaxia confirmada
+ALARMA_CONFIRMADA --> NORMAL : evento controlado
+EMERGENCIA --> INFUSION_DETENIDA : orden de paro ejecutada
+INFUSION_DETENIDA --> RECUPERACION : atención médica inicia recuperación
+RECUPERACION --> NORMAL : signos estabilizados
+
+note right of EMERGENCIA
+Seguridad del paciente = propiedad emergente
+que depende de sensor + red + gateway + backend + UI + bomba.
+end note
+@enduml

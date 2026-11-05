@@ -1,0 +1,45 @@
+@startuml
+' MediGuard IoT - Diagrama General de Casos de Uso
+' Fuente: SRS elaborado a partir de la guía del laboratorio.
+left to right direction
+skinparam packageStyle rectangle
+actor "Médico de guardia" as Doctor
+actor "Enfermera UCI" as Nurse
+actor "Sensor biomédico" as Sensor
+actor "Gateway hospitalario" as Gateway
+actor "Bomba de infusión" as Pump
+
+rectangle "MediGuard IoT" {
+  usecase "UC-01\nMonitorizar paciente" as UC1
+  usecase "UC-02\nConsultar historial" as UC2
+  usecase "UC-03\nGestionar alarma crítica" as UC3
+  usecase "UC-04\nAutenticar médico" as UC4
+  usecase "UC-05\nDetectar anafilaxia" as UC5
+  usecase "UC-06\nDetener infusión\nde emergencia" as UC6
+  usecase "UC-07\nGenerar reporte\nde incidente" as UC7
+  usecase "RF-05\nVisualizar ECG bedside" as UCECG
+  usecase "RF-06\nEnviar notificación push" as UCPush
+  usecase "RF-07\nConfirmar alarma" as UCAck
+}
+
+Doctor --> UC4
+Doctor --> UC1
+Doctor --> UC2
+Doctor --> UC3
+Doctor --> UC7
+Doctor --> UCECG
+Nurse --> UC1
+Nurse --> UC3
+Nurse --> UCECG
+Sensor --> UC1
+Gateway --> UC1
+Gateway --> UC5
+Gateway --> UC6
+Pump --> UC6
+
+UC3 .> UCPush : <<include>>
+UC3 .> UCAck : <<include>>
+UC1 .> UCECG : <<extend>>
+UC5 .> UC6 : <<include>>
+UC7 .> UC2 : <<include>>
+@enduml
