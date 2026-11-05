@@ -1,2 +1,0 @@
-# Ingenieria_requisitos
-Ingenieria_requisitos
