@@ -1,0 +1,79 @@
+### Pruebas manuales de la API (extensión "REST Client" de VS Code)
+@base = http://localhost:3000/api
+@gw = gw-uci-demo-key
+
+### RNF-03 · Salud del servicio
+GET {{base}}/health
+
+### RF-04 · Login con tarjeta RFID (médico)
+# @name login
+POST {{base}}/auth/rfid
+Content-Type: application/json
+
+{ "rfid": "RFID-MED-001" }
+
+###
+@token = {{login.response.body.token}}
+
+### RF-04 · Tarjeta no autorizada (debe responder 401)
+POST {{base}}/auth/rfid
+Content-Type: application/json
+
+{ "rfid": "RFID-FALSA-999" }
+
+### Pacientes con últimas lecturas
+GET {{base}}/patients
+Authorization: Bearer {{token}}
+
+### RF-02 · El gateway envía una lectura
+POST {{base}}/gateway/telemetry
+Content-Type: application/json
+x-gateway-key: {{gw}}
+
+{ "pacienteId": "P-001", "tipo": "FC", "valor": 141, "timestampSensor": "2026-11-18T10:00:00Z" }
+
+### RF-01 · Valor límite inferior (44 BPM) -> alarma FC_BAJA
+POST {{base}}/gateway/telemetry
+Content-Type: application/json
+x-gateway-key: {{gw}}
+
+{ "pacienteId": "P-002", "tipo": "FC", "valor": 44 }
+
+### RF-03 · Historial por tipo y rango
+GET {{base}}/patients/P-001/vitals?tipo=FC&desde=2026-11-18T00:00:00Z&hasta=2026-11-19T00:00:00Z
+Authorization: Bearer {{token}}
+
+### Alarmas activas
+GET {{base}}/alarms?estado=ACTIVA
+Authorization: Bearer {{token}}
+
+### RF-07 · Confirmar lectura de una alarma (reemplaza el id)
+POST {{base}}/alarms/AL-xxxxxxxx/ack
+Authorization: Bearer {{token}}
+
+### Simulador · forzar escenario de anafilaxia en UCI-03
+POST {{base}}/simulator/P-003/scenario
+Authorization: Bearer {{token}}
+Content-Type: application/json
+
+{ "escenario": "ANAFILAXIA" }
+
+### RF-08 · Incidentes detectados
+GET {{base}}/incidents
+Authorization: Bearer {{token}}
+
+### RF-09 · Confirmar anafilaxia -> orden de paro (reemplaza el id)
+POST {{base}}/incidents/INC-xxxxxxxx/confirm
+Authorization: Bearer {{token}}
+
+### RF-10 · Reporte de incidente (reemplaza el id)
+GET {{base}}/incidents/INC-xxxxxxxx/report
+Authorization: Bearer {{token}}
+
+### RNF-01 / RNF-05 · Métricas
+GET {{base}}/metrics
+Authorization: Bearer {{token}}
+
+### Auditoría
+GET {{base}}/audit
+Authorization: Bearer {{token}}

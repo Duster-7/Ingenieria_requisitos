@@ -1,0 +1,95 @@
+<header class="topbar">
+  <a class="brand" routerLink="/dashboard">
+    <span class="brand__pulse" aria-hidden="true"></span>
+    <span class="brand__name">MediGuard <b>IoT</b></span>
+    <span class="brand__unit">UCI</span>
+  </a>
+
+  <button class="topbar__menu" (click)="menuAbierto.set(!menuAbierto())" aria-label="Menú">☰</button>
+
+  <nav class="nav" [class.nav--open]="menuAbierto()" (click)="menuAbierto.set(false)">
+    <a routerLink="/dashboard" routerLinkActive="is-active">Central</a>
+    <a routerLink="/alarmas" routerLinkActive="is-active">
+      Alarmas
+      @if (rt.alarmasActivas().length) {
+        <span class="pill pill--critico">{{ rt.alarmasActivas().length }}</span>
+      }
+    </a>
+    <a routerLink="/incidentes" routerLinkActive="is-active">
+      Incidentes
+      @if (rt.incidentesAbiertos().length) {
+        <span class="pill pill--critico">{{ rt.incidentesAbiertos().length }}</span>
+      }
+    </a>
+    <a routerLink="/historial" routerLinkActive="is-active">Historial</a>
+    <a routerLink="/sistema" routerLinkActive="is-active">Sistema</a>
+  </nav>
+
+  <div class="topbar__status">
+    <span class="conn" [class.conn--on]="rt.conectado()" [title]="rt.conectado() ? 'Conectado en tiempo real' : 'Sin conexión'">
+      <i></i>{{ rt.conectado() ? 'En línea' : 'Desconectado' }}
+    </span>
+    @if (rt.latenciaPromedioMs() !== null) {
+      <span class="lat" [class.lat--mal]="rt.latenciaPromedioMs()! >= 500" title="Latencia sensor → pantalla (RNF-01)">
+        {{ rt.latenciaPromedioMs() }} ms
+      </span>
+    }
+    <button class="icon-btn" (click)="alternarSilencio()" [title]="sonido.silenciado() ? 'Reactivar sonido' : 'Silenciar 2 min'">
+      {{ sonido.silenciado() ? '🔕' : '🔔' }}
+    </button>
+    @if (permisoNotif() === 'default') {
+      <button class="btn btn--ghost btn--sm" (click)="pedirPermisoNotificaciones()">Activar push</button>
+    }
+    <div class="user">
+      <span class="user__name">{{ auth.usuario()?.nombre }}</span>
+      <span class="user__role">{{ auth.usuario()?.rol === 'MEDICO' ? 'Médico de guardia' : 'Enfermería UCI' }}</span>
+    </div>
+    <button class="btn btn--ghost btn--sm" (click)="salir()">Salir</button>
+  </div>
+</header>
+
+@if (alarmasBanner().length) {
+  <section class="alarm-banner" role="alert" aria-live="assertive">
+    @for (a of alarmasBanner(); track a.id) {
+      <div class="alarm-banner__item">
+        <span class="alarm-banner__dot"></span>
+        <b>{{ nombreCama(a.pacienteId) }}</b>
+        <span class="tag">{{ a.tipo | tipoAlarma }}</span>
+        <span class="alarm-banner__msg">{{ a.mensaje }}</span>
+        <span class="muted">{{ a.creadaEn | date: 'HH:mm:ss' }}</span>
+        <button class="btn btn--light btn--sm" [disabled]="confirmando() === a.id" (click)="confirmar(a.id)">Confirmar lectura</button>
+      </div>
+    }
+    @if (rt.alarmasActivas().length > 3) {
+      <a class="alarm-banner__more" routerLink="/alarmas">+{{ rt.alarmasActivas().length - 3 }} alarmas más</a>
+    }
+  </section>
+}
+
+@if (error()) {
+  <div class="notice notice--error">{{ error() }}</div>
+}
+
+<main class="content">
+  <router-outlet />
+</main>
+
+<div class="toasts" aria-live="polite">
+  @for (n of rt.notificaciones(); track n.id) {
+    <div class="toast">
+      <div class="toast__head">
+        <span class="toast__app">📱 Push · MediGuard</span>
+        <button class="toast__close" (click)="rt.descartarNotificacion(n.id)" aria-label="Cerrar">×</button>
+      </div>
+      <b>{{ n.titulo }}</b>
+      <p>{{ n.cuerpo }}</p>
+      <div class="toast__actions">
+        @if (n.incidenteId) {
+          <a class="btn btn--danger btn--sm" routerLink="/incidentes" (click)="rt.descartarNotificacion(n.id)">Atender incidente</a>
+        } @else {
+          <a class="btn btn--light btn--sm" [routerLink]="['/bedside', n.pacienteId]" (click)="rt.descartarNotificacion(n.id)">Ver paciente</a>
+        }
+      </div>
+    </div>
+  }
+</div>

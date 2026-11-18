@@ -1,0 +1,9 @@
+{
+  "version": "2.0.0",
+  "tasks": [
+    { "label": "MediGuard: backend", "type": "shell", "command": "npm run dev", "options": { "cwd": "${workspaceFolder}/backend" }, "isBackground": true, "problemMatcher": [] },
+    { "label": "MediGuard: frontend", "type": "shell", "command": "npm start", "options": { "cwd": "${workspaceFolder}/frontend" }, "isBackground": true, "problemMatcher": [] },
+    { "label": "MediGuard: iniciar todo", "dependsOn": ["MediGuard: backend", "MediGuard: frontend"], "problemMatcher": [] },
+    { "label": "MediGuard: pruebas de requisitos", "type": "shell", "command": "npm test", "options": { "cwd": "${workspaceFolder}/backend" }, "group": "test", "problemMatcher": [] }
+  ]
+}
